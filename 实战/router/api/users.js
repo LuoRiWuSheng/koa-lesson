@@ -10,6 +10,12 @@ const jwt = require('jsonwebtoken');
 const { secret } = require('../../config')
 const User = require('../../modules/User')
 const passport = require('koa-passport')
+const _ = require('lodash')
+
+const validatorInputLogin = require('../../validation/login')
+const validatorInputRegister = require('../../validation/register')
+
+const { isEmpty } = require('../../config/utils')
 
 /**
  * @route GET api/users/login
@@ -17,6 +23,18 @@ const passport = require('koa-passport')
  */
 router.post('/login', async ctx => {
   let { name, email, password } = ctx.request.body
+
+  let error = validatorInputLogin({ name, password })
+
+  // 判断error是不是空对象
+  if (!isEmpty(error)) {
+    ctx.status = 400
+    ctx.body = {
+      msg: error,
+      code: -1
+    }
+    return
+  }
 
   const findRes = await User.find({ email })
 
@@ -68,6 +86,16 @@ router.get('/test', async ctx => {
  */
 router.post('/register', async ctx => {
   let { name, password, email } = ctx.request.body
+
+  var validateRes = validatorInputRegister(ctx.request.body)
+  if (!_.isEmpty(validateRes)) {
+    ctx.status = 400
+    ctx.body = {
+      msg: validateRes,
+      code: -1
+    }
+    return
+  }
 
   const res = await User.find({ email })
 
